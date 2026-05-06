@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "422442109965",
+    "firebase_url": "https://pintarpedia-a42c2-default-rtdb.firebaseio.com",
+    "project_id": "pintarpedia-a42c2",
+    "storage_bucket": "pintarpedia-a42c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422442109965:android:08b7eb7ec8578f667e1944",
+        "android_client_info": {
+          "package_name": "com.kelompokh.pintarpedia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "422442109965-mc05dfmp01417gtji8821db131da116g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kelompokh.pintarpedia",
+            "certificate_hash": "14a25bb5921ee24d60377dde36b9679878b2964e"
+          }
+        },
+        {
+          "client_id": "422442109965-vq42fuktjmaa2hvv9l43hku8tt0eed82.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkYei3omACSGecwE-1eWHoQbMj7LlxkAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "422442109965-vq42fuktjmaa2hvv9l43hku8tt0eed82.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

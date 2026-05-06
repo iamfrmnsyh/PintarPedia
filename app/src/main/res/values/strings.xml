@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">Pintar Pedia</string>
+    <string name="pintar">Pintar</string>
+    <string name="pedia">Pedia</string>
+    <string name="hikmal">Hikmal</string>
+    <string name="hikmal_gmail_com">Hikmal@gmail.com</string>
+    <string name="jln_karanglewa">Jln.karanglewa</string>
+    <string name="default_web_client_id">608828805091-q0s8u7v...apps.googleusercontent.com</string>
+    <string name="_175">175</string>
+
+    <string-array name="role_options">
+        <item>User</item>
+        <item>Admin</item>
+    </string-array>
+
+    <!-- Register Activity -->
+    <string name="buat_akun_baru">Buat Akun Baru</string>
+    <string name="registrasi_subtitle">Silakan isi data di bawah untuk bergabung.</string>
+    <string name="username">Username</string>
+    <string name="alamat_email">Alamat Email</string>
+    <string name="nomor_telepon">Nomor Telepon</string>
+    <string name="alamat_lengkap">Alamat Lengkap</string>
+    <string name="kata_sandi">Kata Sandi</string>
+    <string name="konfirmasi_kata_sandi">Konfirmasi Kata Sandi</string>
+    <string name="daftar_sekarang">Daftar Sekarang</string>
+    <string name="punya_akun_login">Sudah memiliki akun? Login</string>
+
+    <!-- Login Activity -->
+    <string name="login_subtitle">Silakan masuk ke akun Anda</string>
+    <string name="masuk_sebagai">Masuk Sebagai</string>
+    <string name="role_user">User / Siswa</string>
+    <string name="role_admin">Administrator</string>
+    <string name="login_user">Login User / Siswa</string>
+    <string name="login_admin">Login Administrator</string>
+    <string name="kode_rahasia_admin">Kode Rahasia Admin</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="lupa_password">Lupa Password?</string>
+    <string name="masuk">Masuk</string>
+    <string name="atau">Atau</string>
+    <string name="masuk_google">Masuk dengan Google</string>
+    <string name="belum_punya_akun">Belum punya akun? </string>
+</resources>

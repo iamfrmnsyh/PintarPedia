@@ -54,20 +54,28 @@ public class ProfileActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance().getReference("ProfilePictures");
 
-        // 1. Load data lokal (agar saat buka tidak kosong)
-        loadDataLocal();
-
+        // Pemeriksaan Autentikasi Utama
         if (mAuth.getCurrentUser() != null) {
             String uid = mAuth.getCurrentUser().getUid();
             mDatabase = FirebaseDatabase.getInstance().getReference("Users").child(uid);
-            // 2. Tarik data terbaru dari Firebase & simpan ke Lokal
+
+            // Tarik data terbaru dari Firebase secara asinkron di background
             fetchUserProfile();
         } else {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
+            forceNavToLogin();
         }
 
         initClickListeners();
+    }
+
+    /**
+     * TAMBAHAN UTAMA: Lifecycle onResume dipicu kembali saat user menutup
+     * halaman EditProfileActivity, menjamin data lokal selalu sinkron dan segar.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadDataLocal();
     }
 
     private void initClickListeners() {
@@ -85,10 +93,13 @@ public class ProfileActivity extends AppCompatActivity {
         // Menuju halaman Ganti Password
         binding.btnUbahPassword.setOnClickListener(v -> startActivity(new Intent(ProfileActivity.this, UpdatePasswordActivity.class)));
 
+        // Memicu aksi logout bersih
         binding.btnLogout.setOnClickListener(v -> prosesLogout());
     }
 
     private void fetchUserProfile() {
+        if (mDatabase == null) return;
+
         mDatabase.addValueEventListener(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
             @Override
@@ -104,30 +115,24 @@ public class ProfileActivity extends AppCompatActivity {
                     String imageUrl = snapshot.child("profileImageUrl").getValue(String.class);
 
                     if (nama != null) {
-                        binding.tvNamaHeader.setText(nama);
-                        binding.tvUsernameDetail.setText(nama);
                         editor.putString("nama_user", nama);
                     }
                     if (phone != null) {
-                        binding.tvPhone.setText(phone);
                         editor.putString("phone_user", phone);
                     }
                     if (email != null) {
-                        binding.tvEmailDetail.setText(email);
                         editor.putString("email_user", email);
-                    } else if (mAuth.getCurrentUser() != null) {
-                        binding.tvEmailDetail.setText(mAuth.getCurrentUser().getEmail());
                     }
 
                     // --- FOTO PROFIL ---
                     if (imageUrl != null && !imageUrl.isEmpty()) {
-                        if (!isDestroyed()) {
-                            Glide.with(ProfileActivity.this).load(imageUrl).placeholder(R.drawable.profile_placeholder).into(binding.profileImage);
-                        }
                         editor.putString("image_user", imageUrl);
                     }
 
-                    editor.apply(); // Simpan semua perubahan ke lokal
+                    editor.apply(); // Simpan semua perubahan baru ke lokal cache
+
+                    // Muat ulang tampilan UI agar langsung merefleksikan data Firebase terbaru
+                    loadDataLocal();
                 }
             }
 
@@ -141,8 +146,10 @@ public class ProfileActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void loadDataLocal() {
         SharedPreferences sharedPref = getSharedPreferences("USER_DATA", Context.MODE_PRIVATE);
-        binding.tvNamaHeader.setText(sharedPref.getString("nama_user", "User"));
-        binding.tvUsernameDetail.setText(sharedPref.getString("nama_user", "User"));
+
+        String currentName = sharedPref.getString("nama_user", "User");
+        binding.tvNamaHeader.setText(currentName);
+        binding.tvUsernameDetail.setText(currentName);
         binding.tvPhone.setText(sharedPref.getString("phone_user", "-"));
 
         String email = sharedPref.getString("email_user", "");
@@ -154,10 +161,20 @@ public class ProfileActivity extends AppCompatActivity {
             binding.tvEmailDetail.setText("-");
         }
 
+        // Tampilkan UID Singkat
         if (mAuth.getCurrentUser() != null) {
             String uid = mAuth.getCurrentUser().getUid();
             String displayId = uid.length() >= 8 ? uid.substring(0, 8) : uid;
             binding.tvIdUser.setText("ID: #" + displayId.toUpperCase());
+        }
+
+        // Tampilkan gambar profil lokal / dari URL cache Glide
+        String cachedImg = sharedPref.getString("image_user", "");
+        if (!cachedImg.isEmpty() && !isDestroyed()) {
+            Glide.with(ProfileActivity.this)
+                    .load(cachedImg)
+                    .placeholder(R.drawable.profile_placeholder)
+                    .into(binding.profileImage);
         }
     }
 
@@ -171,9 +188,24 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * PERBAIKAN LOGOUT: Menghapus data SharedPreferences secara menyeluruh
+     * sebelum melakukan sign out agar data tidak tertinggal untuk user berikutnya.
+     */
     private void prosesLogout() {
-        getSharedPreferences("USER_DATA", Context.MODE_PRIVATE).edit().clear().apply();
+        // 1. Bersihkan seluruh data sesi lokal (nama, email, foto, dll)
+        SharedPreferences sharedPref = getSharedPreferences("USER_DATA", Context.MODE_PRIVATE);
+        sharedPref.edit().clear().apply();
+
+        // 2. Keluar dari Firebase Authentication
         mAuth.signOut();
+
+        // 3. Alihkan ke LoginActivity dan hancurkan tumpukan activity lama
+        Toast.makeText(this, "Berhasil keluar akun", Toast.LENGTH_SHORT).show();
+        forceNavToLogin();
+    }
+
+    private void forceNavToLogin() {
         Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

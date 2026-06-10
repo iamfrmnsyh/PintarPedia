@@ -41,9 +41,9 @@
     <string name="belum_punya_akun">Belum punya akun? </string>
 
     <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
-    <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
-    <string name="native_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
-    <string name="rewarded_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
-    <string name="rewarded_interstitial_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
-    <string name="app_open_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="native_ad_unit_id">ca-app-pub-3940256099942544/2247696110</string>
+    <string name="rewarded_ad_unit_id">ca-app-pub-3940256099942544/5224354917</string>
+    <string name="rewarded_interstitial_ad_unit_id">ca-app-pub-3940256099942544/5354046379</string>
+    <string name="app_open_ad_unit_id">ca-app-pub-3940256099942544/9257395921</string>
 </resources>

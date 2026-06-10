@@ -29,8 +29,8 @@ import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd; // TAMBAHAN IMPORT BARU
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback; // TAMBAHAN IMPORT BARU
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd;
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -51,7 +51,7 @@ public class HomeActivity extends AppCompatActivity {
     private InterstitialAd mInterstitialAd;
     private NativeAd mNativeAd;
     private RewardedAd mRewardedAd;
-    private RewardedInterstitialAd mRewardedInterstitialAd; // TAMBAHAN: Objek Interstisial Reward
+    private RewardedInterstitialAd mRewardedInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +69,24 @@ public class HomeActivity extends AppCompatActivity {
         loadInterstitialAd();
         loadNativeAd();
         loadRewardedAd();
-        loadRewardedInterstitialAd(); // TAMBAHAN: Preload Interstisial Reward
+        loadRewardedInterstitialAd();
 
-        // 3. Konfigurasi Firebase & Profil Lokal
+        // 3. Konfigurasi Firebase & Validasi Autentikasi
         mAuth = FirebaseAuth.getInstance();
+
+        // PERBAIKAN SINKRONISASI: Set text default ke mode memuat demi keamanan data multi-user
+        binding.tvUsernameHome.setText("Memuat...");
         loadLocalProfile();
 
+        // PERBAIKAN SINKRONISASI: Pastikan referensi database mengambil UID user yang aktif saat ini
         if (mAuth.getCurrentUser() != null) {
             String uid = mAuth.getCurrentUser().getUid();
             mDatabase = FirebaseDatabase.getInstance().getReference("Users").child(uid);
             syncUserData();
+        } else {
+            // Jika tidak ada user yang terautentikasi (keadaan tidak valid), paksa kembali ke halaman Login
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
         }
 
         setupClickListeners();
@@ -280,7 +288,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // ==================== 5. STRUKTUR IKLAN REWARDED INTERSTITIAL (TAMBAHAN BARU) ====================
+    // ==================== 5. STRUKTUR IKLAN REWARDED INTERSTITIAL ====================
     private void loadRewardedInterstitialAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
 
@@ -306,7 +314,7 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onAdDismissedFullScreenContent() {
                     Log.d(TAG, "Rewarded Interstitial ditutup.");
-                    loadRewardedInterstitialAd(); // Preload stok baru setelah ditutup
+                    loadRewardedInterstitialAd();
                 }
 
                 @Override
@@ -316,7 +324,6 @@ public class HomeActivity extends AppCompatActivity {
                 }
             });
 
-            // Menampilkan intersitial reward dan memberikan reward lewat callback
             mRewardedInterstitialAd.show(HomeActivity.this, rewardItem -> {
                 Log.d(TAG, "User sukses mengklaim reward dari Interstisial.");
                 Toast.makeText(HomeActivity.this, "Bonus Akses Terbuka via Interstitial Reward!", Toast.LENGTH_SHORT).show();
@@ -335,26 +342,39 @@ public class HomeActivity extends AppCompatActivity {
 
         if (!namaLokal.isEmpty()) {
             binding.tvUsernameHome.setText(namaLokal);
-        } else {
-            binding.tvUsernameHome.setText("Memuat...");
         }
     }
 
+    /**
+     * PERBAIKAN UTAMA SINKRONISASI:
+     * Listener asinkron yang menjamin data antarmuka diperbarui secara instan dari Firebase
+     * sekaligus memperbarui repositori SharedPreferences lokal agar sinkron ke halaman ProfileActivity.
+     */
     private void syncUserData() {
+        if (mDatabase == null) return;
+
         mDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     String nama = snapshot.child("username").getValue(String.class);
                     if (nama != null && !nama.isEmpty()) {
+                        // 1. Tampilkan ke komponen UI teks Home secara realtime
                         binding.tvUsernameHome.setText(nama);
+
+                        // 2. Tulis ke file SharedPreferences lokal
                         getSharedPreferences("USER_DATA", Context.MODE_PRIVATE)
-                                .edit().putString("nama_user", nama).apply();
+                                .edit()
+                                .putString("nama_user", nama)
+                                .apply();
                     }
                 }
             }
+
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Gagal sinkronisasi data Firebase: " + error.getMessage());
+            }
         });
     }
 
@@ -363,7 +383,7 @@ public class HomeActivity extends AppCompatActivity {
         if (binding.cardUtbk2022 != null) binding.cardUtbk2022.setOnClickListener(v -> checkAdBeforeMove("UTBK 2022"));
         if (binding.cardUtbk2023 != null) binding.cardUtbk2023.setOnClickListener(v -> checkAdBeforeMove("UTBK 2023"));
 
-        // PERUBAHAN: Menu UTBK 2024 & 2025 dialihkan ke format Hibrida Rewarded Interstitial
+        // Menu UTBK 2024 & 2025: Menggunakan Hibrida Rewarded Interstitial
         if (binding.cardUtbk2024 != null) binding.cardUtbk2024.setOnClickListener(v -> checkRewardedInterstitialBeforeMove("UTBK 2024"));
         if (binding.cardUtbk2025 != null) binding.cardUtbk2025.setOnClickListener(v -> checkRewardedInterstitialBeforeMove("UTBK 2025"));
 

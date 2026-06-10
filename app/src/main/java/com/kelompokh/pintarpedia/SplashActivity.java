@@ -8,6 +8,8 @@ import android.view.animation.AlphaAnimation;
 import android.widget.LinearLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.ads.MobileAds;
+
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
 
@@ -15,6 +17,9 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        // Inisialisasi Mobile Ads sejak dini
+        MobileAds.initialize(this, initializationStatus -> {});
 
         // 1. Animasi Fade In untuk Logo
         LinearLayout logoContainer = findViewById(R.id.logo_container);

@@ -4,205 +4,63 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F1F5F9"
-    android:fillViewport="true">
+    android:background="#F8FAFC"
+    android:fillViewport="true"
+    tools:ignore="HardcodedText">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dashboard Admin"
-            android:textColor="#2196F3"
-            android:textSize="22sp"
-            android:fontFamily="sans-serif-black"
-            android:textStyle="bold"
-            tools:ignore="HardcodedText" />
+            android:text="Tambah &amp; Kelola Soal"
+            android:textColor="#1E293B"
+            android:textSize="26sp"
+            android:fontFamily="sans-serif-black" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Manajemen Soal UTBK PintarPedia"
+            android:text="Manajemen Database Soal PintarPedia"
             android:textColor="#64748B"
             android:textSize="14sp"
-            android:layout_marginBottom="24dp"
-            tools:ignore="HardcodedText" />
+            android:layout_marginBottom="28dp" />
 
         <!-- BAGIAN 1: PENGATURAN KATEGORI -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Kategori Tahun / Paket"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#1E293B"
-                    tools:ignore="HardcodedText" />
+                    android:textAllCaps="true"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.05" />
 
                 <Spinner
                     android:id="@+id/spinnerKategori"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@android:drawable/btn_dropdown" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- BAGIAN 2: INPUT SATUAN -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tambah Soal Satuan"
-                    android:textStyle="bold"
-                    android:textColor="#2196F3"
-                    android:layout_marginBottom="16dp"
-                    tools:ignore="HardcodedText" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Pertanyaan"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPertanyaan"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="2" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <GridLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:columnCount="1"
-                    android:layout_marginTop="12dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Opsi A"
-                        android:layout_marginBottom="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxCornerRadiusBottomEnd="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOpsiA"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Opsi B"
-                        android:layout_marginBottom="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxCornerRadiusBottomEnd="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOpsiB"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Opsi C"
-                        android:layout_marginBottom="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxCornerRadiusBottomEnd="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOpsiC"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Opsi D"
-                        android:layout_marginBottom="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxCornerRadiusBottomEnd="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOpsiD"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Opsi E"
-                        android:layout_marginBottom="16dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxCornerRadiusBottomEnd="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOpsiE"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </GridLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Kunci Jawaban"
-                    android:textSize="12sp"
-                    android:textColor="#64748B"
-                    tools:ignore="HardcodedText" />
-
-                <Spinner
-                    android:id="@+id/spinnerJawaban"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="@android:drawable/btn_dropdown" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnUploadSoal"
-                    android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="Simpan Satu Soal"
-                    android:textAllCaps="false"
-                    app:cornerRadius="12dp"
-                    android:backgroundTint="#2196F3"
-                    tools:ignore="HardcodedText" />
-
+                    android:layout_marginTop="12dp"
+                    android:background="@android:drawable/btn_dropdown" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -210,60 +68,117 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="30dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Upload Masal (Bulk)"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#F4B400"
-                    android:layout_marginBottom="8dp"
-                    tools:ignore="HardcodedText" />
+                    android:textAllCaps="true"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.05"
+                    android:layout_marginBottom="8dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Format: Pertanyaan|A|B|C|D|E|Kunci\nGunakan '#' untuk memisah antar soal."
-                    android:textSize="11sp"
+                    android:text="Paste teks soal di bawah ini."
+                    android:textSize="12sp"
                     android:textColor="#94A3B8"
-                    android:layout_marginBottom="12dp"
-                    tools:ignore="HardcodedText" />
+                    android:layout_marginBottom="20dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp">
+                    android:layout_marginBottom="24dp"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxStrokeColor="#F4B400">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBulkSoal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Paste teks bulk di sini..."
+                        android:hint="Format: Pertanyaan, Opsi, Jawaban"
                         android:inputType="textMultiLine"
-                        android:minLines="5"
-                        android:gravity="top" />
+                        android:minLines="3"
+                        android:gravity="top"
+                        android:textColor="#1E293B" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnUploadBulk"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="Upload Masal ke Firebase"
+                    android:text="Upload Teks Masal"
+                    android:fontFamily="sans-serif-black"
                     android:textAllCaps="false"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
                     android:backgroundTint="#F4B400"
-                    tools:ignore="HardcodedText" />
+                    app:elevation="4dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- BAGIAN 4: UPLOAD FILE -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Import dari File (.TXT)"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="#10B981"
+                    android:textAllCaps="true"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.05"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pilih file dokumen .txt untuk mengimpor banyak soal sekaligus."
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginBottom="20dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnChooseFile"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="Pilih File (.txt)"
+                    android:fontFamily="sans-serif-medium"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="#10B981"
+                    app:icon="@drawable/ic_book"
+                    app:iconGravity="textStart"
+                    app:iconTint="#10B981"
+                    android:textColor="#10B981" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

@@ -21,7 +21,6 @@ import com.google.firebase.database.ValueEventListener;
 public class AdminHomeActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
-    private DatabaseReference mDatabase;
     private TextView tvTotalUser, tvTotalQuiz;
 
     @Override
@@ -30,7 +29,6 @@ public class AdminHomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_home);
 
         mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
 
         tvTotalUser = findViewById(R.id.tvTotalUserCount);
         tvTotalQuiz = findViewById(R.id.tvTotalQuizCount);
@@ -63,25 +61,43 @@ public class AdminHomeActivity extends AppCompatActivity {
 
     private void fetchDashboardData() {
         // Path "Users" sesuai dengan database kita
-        mDatabase.child("Users").addValueEventListener(new ValueEventListener() {
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("Users");
+        usersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                tvTotalUser.setText(String.valueOf(snapshot.exists() ? snapshot.getChildrenCount() : 0));
+                if (snapshot.exists()) {
+                    long count = snapshot.getChildrenCount();
+                    tvTotalUser.setText(String.valueOf(count));
+                    Log.d("FIREBASE_ADMIN", "Total Users updated: " + count);
+                } else {
+                    tvTotalUser.setText("0");
+                    Log.d("FIREBASE_ADMIN", "No users found in node 'Users'");
+                }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("FIREBASE_ADMIN", error.getMessage());
+                Log.e("FIREBASE_ADMIN", "Error Fetch Users: " + error.getMessage() + " (Code: " + error.getCode() + ")");
+                // Jika error code 1, biasanya adalah Permission Denied (Masalah di Firebase Rules)
+                if (error.getCode() == -1 || error.getCode() == 1) {
+                    Toast.makeText(AdminHomeActivity.this, "Akses Database Ditolak. Periksa Firebase Rules.", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
-        mDatabase.child("soal_utbk").addValueEventListener(new ValueEventListener() {
+        DatabaseReference quizRef = FirebaseDatabase.getInstance().getReference("soal_utbk");
+        quizRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                tvTotalQuiz.setText(String.valueOf(snapshot.exists() ? snapshot.getChildrenCount() : 0));
+                if (snapshot.exists()) {
+                    long count = snapshot.getChildrenCount();
+                    tvTotalQuiz.setText(String.valueOf(count));
+                } else {
+                    tvTotalQuiz.setText("0");
+                }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("FIREBASE_ADMIN", error.getMessage());
+                Log.e("FIREBASE_ADMIN", "Error Fetch Quiz: " + error.getMessage());
             }
         });
     }

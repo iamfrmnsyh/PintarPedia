@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Keamanan"
+            android:text="Edit Profil"
             android:textColor="@color/white"
             android:textSize="18sp"
             android:fontFamily="sans-serif-black" />
@@ -56,7 +56,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="100dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -70,91 +70,84 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ganti Kata Sandi"
+                        android:text="Data Pengguna"
                         android:textColor="#1E293B"
                         android:textSize="16sp"
                         android:fontFamily="sans-serif-black"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="20dp" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Pastikan kata sandi Anda kuat untuk melindungi data pribadi Anda."
-                        android:textColor="#64748B"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="24dp" />
-
-                    <!-- Old Password -->
+                    <!-- Username Field -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tlOldPassword"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:hint="Kata Sandi Lama"
-                        app:boxCornerRadiusTopStart="16dp"
+                        android:hint="Nama Pengguna"
                         app:boxCornerRadiusBottomEnd="16dp"
-                        app:startIconDrawable="@drawable/ic_lock"
-                        app:startIconTint="#2196F3"
-                        app:passwordToggleEnabled="true">
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:startIconDrawable="@drawable/ic_person"
+                        app:startIconTint="#2196F3">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etOldPassword"
+                            android:id="@+id/etUsername"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword"
+                            android:inputType="textPersonName"
                             android:textColor="#1E293B" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- New Password -->
+                    <!-- Phone Field -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tlNewPassword"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:hint="Kata Sandi Baru"
-                        app:boxCornerRadiusTopStart="16dp"
+                        android:hint="Nomor Telepon"
                         app:boxCornerRadiusBottomEnd="16dp"
-                        app:startIconDrawable="@drawable/ic_lock"
-                        app:startIconTint="#2196F3"
-                        app:passwordToggleEnabled="true">
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:startIconDrawable="@drawable/ic_phone"
+                        app:startIconTint="#2196F3">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etNewPassword"
+                            android:id="@+id/etPhone"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword"
+                            android:inputType="phone"
                             android:textColor="#1E293B" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Confirm Password -->
+                    <!-- Email Field (Read Only) -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tlConfirmPassword"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:hint="Konfirmasi Kata Sandi"
-                        app:boxCornerRadiusTopStart="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="Akun (Email)"
                         app:boxCornerRadiusBottomEnd="16dp"
-                        app:startIconDrawable="@drawable/ic_lock"
-                        app:startIconTint="#2196F3"
-                        app:passwordToggleEnabled="true">
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:startIconDrawable="@drawable/ic_email"
+                        app:startIconTint="#2196F3">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etConfirmPassword"
+                            android:id="@+id/etEmail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword"
-                            android:textColor="#1E293B" />
+                            android:enabled="false"
+                            android:inputType="textEmailAddress"
+                            android:textColor="#94A3B8" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnUpdatePassword"
+                android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginTop="32dp"
@@ -166,16 +159,15 @@
                 android:backgroundTint="#2196F3"
                 app:elevation="4dp" />
 
-            <ProgressBar
-                android:id="@+id/loadingUpdate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="20dp"
-                android:visibility="gone"
-                android:indeterminateTint="#2196F3" />
-
         </LinearLayout>
     </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        android:elevation="10dp" />
 
 </RelativeLayout>

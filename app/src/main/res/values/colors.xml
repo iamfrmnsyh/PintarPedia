@@ -1,14 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_brand">#2D5BD0</color> <color name="primary_dark">#1E40AF</color>
-    <color name="accent_gold">#F4B400</color> <color name="white">#FFFFFF</color>
-    <color name="black">#1E293B</color> <color name="surface_background">#F8FAFD</color> <color name="grey_stroke">#E2E8F0</color> <color name="text_main">#1E293B</color>
+    <!-- Brand Colors -->
+    <color name="primary_brand">#2196F3</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="accent_gold">#F4B400</color>
+
+    <!-- Neutral Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#1E293B</color>
+    <color name="surface_background">#F8FAFC</color>
+    <color name="grey_stroke">#E2E8F0</color>
+    <color name="divider">#F1F5F9</color>
+
+    <!-- Text Colors -->
+    <color name="text_main">#1E293B</color>
     <color name="text_secondary">#64748B</color>
     <color name="text_hint">#94A3B8</color>
 
+    <!-- Semantic Colors -->
     <color name="success_green">#10B981</color>
     <color name="error_red">#EF4444</color>
+    <color name="error_red_light">#FEE2E2</color>
 
-    <color name="purple_500">#2D5BD0</color>
-    <color name="purple_700">#1E40AF</color>
+    <!-- Legacy / System compatibility -->
+    <color name="purple_200">#BBDEFB</color>
+    <color name="purple_500">#2196F3</color>
+    <color name="purple_700">#1976D2</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
 </resources>

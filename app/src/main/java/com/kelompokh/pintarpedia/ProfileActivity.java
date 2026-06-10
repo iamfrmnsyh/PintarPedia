@@ -79,10 +79,11 @@ public class ProfileActivity extends AppCompatActivity {
             galleryLauncher.launch(intent);
         });
 
-        // 3. Navigasi ke Ganti Password (Activity Baru)
-        binding.btnUbahPassword.setOnClickListener(v -> {
-            startActivity(new Intent(ProfileActivity.this, UpdatePasswordActivity.class));
-        });
+        // Menuju halaman Edit Profil
+        binding.btnEditProfile.setOnClickListener(v -> startActivity(new Intent(ProfileActivity.this, EditProfileActivity.class)));
+
+        // Menuju halaman Ganti Password
+        binding.btnUbahPassword.setOnClickListener(v -> startActivity(new Intent(ProfileActivity.this, UpdatePasswordActivity.class)));
 
         binding.btnLogout.setOnClickListener(v -> prosesLogout());
     }
@@ -99,8 +100,7 @@ public class ProfileActivity extends AppCompatActivity {
                     // --- INFO PRIBADI ---
                     String nama = snapshot.child("username").getValue(String.class);
                     String phone = snapshot.child("phone").getValue(String.class);
-                    String bPlace = snapshot.child("birthPlace").getValue(String.class);
-                    String bDate = snapshot.child("birthDate").getValue(String.class);
+                    String email = snapshot.child("email").getValue(String.class);
                     String imageUrl = snapshot.child("profileImageUrl").getValue(String.class);
 
                     if (nama != null) {
@@ -112,37 +112,21 @@ public class ProfileActivity extends AppCompatActivity {
                         binding.tvPhone.setText(phone);
                         editor.putString("phone_user", phone);
                     }
-                    if (bPlace != null && bDate != null) {
-                        binding.tvTTL.setText(bPlace + ", " + bDate);
-                        editor.putString("birthPlace_user", bPlace);
-                        editor.putString("birthDate_user", bDate);
+                    if (email != null) {
+                        binding.tvEmailDetail.setText(email);
+                        editor.putString("email_user", email);
+                    } else if (mAuth.getCurrentUser() != null) {
+                        binding.tvEmailDetail.setText(mAuth.getCurrentUser().getEmail());
                     }
 
                     // --- FOTO PROFIL ---
                     if (imageUrl != null && !imageUrl.isEmpty()) {
-                        Glide.with(ProfileActivity.this).load(imageUrl).placeholder(R.drawable.profile_placeholder).into(binding.profileImage);
+                        if (!isDestroyed()) {
+                            Glide.with(ProfileActivity.this).load(imageUrl).placeholder(R.drawable.profile_placeholder).into(binding.profileImage);
+                        }
                         editor.putString("image_user", imageUrl);
                     }
 
-                    // --- STATISTIK (XP, KUIS, PERINGKAT) ---
-                    if (snapshot.hasChild("stats")) {
-                        Long totalKuis = snapshot.child("stats").child("totalKuis").getValue(Long.class);
-                        Long totalPoin = snapshot.child("stats").child("totalPoin").getValue(Long.class);
-                        String rank = snapshot.child("stats").child("peringkat").getValue(String.class);
-
-                        if (totalKuis != null) {
-                            binding.tvStatKuis.setText(String.valueOf(totalKuis));
-                            editor.putLong("kuis_user", totalKuis);
-                        }
-                        if (totalPoin != null) {
-                            binding.tvStatPoin.setText(String.valueOf(totalPoin));
-                            editor.putLong("poin_user", totalPoin);
-                        }
-                        if (rank != null) {
-                            binding.tvStatRank.setText(rank);
-                            editor.putString("rank_user", rank);
-                        }
-                    }
                     editor.apply(); // Simpan semua perubahan ke lokal
                 }
             }
@@ -160,15 +144,20 @@ public class ProfileActivity extends AppCompatActivity {
         binding.tvNamaHeader.setText(sharedPref.getString("nama_user", "User"));
         binding.tvUsernameDetail.setText(sharedPref.getString("nama_user", "User"));
         binding.tvPhone.setText(sharedPref.getString("phone_user", "-"));
-        binding.tvTTL.setText(sharedPref.getString("birthPlace_user", "-") + ", " + sharedPref.getString("birthDate_user", ""));
 
-        // Load stats dari lokal
-        binding.tvStatKuis.setText(String.valueOf(sharedPref.getLong("kuis_user", 0)));
-        binding.tvStatPoin.setText(String.valueOf(sharedPref.getLong("poin_user", 0)));
-        binding.tvStatRank.setText(sharedPref.getString("rank_user", "-"));
+        String email = sharedPref.getString("email_user", "");
+        if (!email.isEmpty()) {
+            binding.tvEmailDetail.setText(email);
+        } else if (mAuth.getCurrentUser() != null) {
+            binding.tvEmailDetail.setText(mAuth.getCurrentUser().getEmail());
+        } else {
+            binding.tvEmailDetail.setText("-");
+        }
 
         if (mAuth.getCurrentUser() != null) {
-            binding.tvIdUser.setText("ID: #" + mAuth.getCurrentUser().getUid().substring(0, 8).toUpperCase());
+            String uid = mAuth.getCurrentUser().getUid();
+            String displayId = uid.length() >= 8 ? uid.substring(0, 8) : uid;
+            binding.tvIdUser.setText("ID: #" + displayId.toUpperCase());
         }
     }
 

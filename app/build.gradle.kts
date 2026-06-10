@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace = "com.kelompokh.pintarpedia"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.kelompokh.pintarpedia"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
+        minSdk = 35
+        targetSdk = 35
+        versionCode = 7
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,6 +28,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.android.gms:play-services-ads:25.3.0")
     // Firebase (Menggunakan BoM versi 33.0.0 yang sudah Anda pasang)
     implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     implementation("com.google.firebase:firebase-analytics")
@@ -39,6 +40,7 @@ dependencies {
 
     // --- TAMBAHKAN LIBRARY GLIDE (UNTUK LOADING GAMBAR) ---
     implementation("com.github.bumptech.glide:glide:4.15.1")
+    implementation(libs.play.services.ads)
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
     // ------------------------------------------------------
 
@@ -49,4 +51,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 }

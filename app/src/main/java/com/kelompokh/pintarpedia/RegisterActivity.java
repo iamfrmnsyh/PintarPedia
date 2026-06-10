@@ -27,7 +27,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
-    private EditText etUsername, etEmail, etPassword, etConfirmPassword, etNomor, etBirthPlace, etBirthDate;
+    private EditText etUsername, etEmail, etPassword, etConfirmPassword, etNomor;
     private Button btnRegister;
     private ProgressBar progressBar;
     private TextView tvLoginLink;
@@ -45,8 +45,6 @@ public class RegisterActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etNomor = findViewById(R.id.etPhone);
-        etBirthPlace = findViewById(R.id.etBirthPlace);
-        etBirthDate = findViewById(R.id.etBirthDate);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
@@ -67,11 +65,8 @@ public class RegisterActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
         String nomor = etNomor.getText().toString().trim();
-        String tempatLahir = etBirthPlace.getText().toString().trim();
-        String tanggalLahir = etBirthDate.getText().toString().trim();
 
-        if (username.isEmpty() || email.isEmpty() || password.isEmpty() ||
-                nomor.isEmpty() || tempatLahir.isEmpty() || tanggalLahir.isEmpty()) {
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || nomor.isEmpty()) {
             Toast.makeText(this, "Mohon lengkapi semua data!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -100,7 +95,7 @@ public class RegisterActivity extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             // Panggil fungsi simpan data (termasuk stats)
-                            saveUserToFirebaseDatabase(user.getUid(), username, email, nomor, tempatLahir, tanggalLahir);
+                            saveUserToFirebaseDatabase(user.getUid(), username, email, nomor);
 
                             user.sendEmailVerification()
                                     .addOnCompleteListener(emailTask -> {
@@ -117,15 +112,15 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    private void saveUserToFirebaseDatabase(String userId, String username, String email, String phone, String birthPlace, String birthDate) {
+    private void saveUserToFirebaseDatabase(String userId, String username, String email, String phone) {
         // 1. Map untuk Data Profil Utama
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("userId", userId);
         userMap.put("username", username);
         userMap.put("email", email);
         userMap.put("phone", phone);
-        userMap.put("birthPlace", birthPlace);
-        userMap.put("birthDate", birthDate);
+        userMap.put("birthPlace", "-");
+        userMap.put("birthDate", "-");
         userMap.put("role", "user");
 
         // 2. Map Tambahan untuk Folder 'stats' (Data Awal)
@@ -141,7 +136,7 @@ public class RegisterActivity extends AppCompatActivity {
         mDatabase.child(userId).child("stats").setValue(statsMap);
 
         // Simpan lokal juga
-        saveUserDataLocal(username, phone, birthPlace, birthDate);
+        saveUserDataLocal(username, phone);
     }
 
     private void showInAppNotification(String title, String message, boolean isSuccess) {
@@ -159,13 +154,13 @@ public class RegisterActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void saveUserDataLocal(String name, String phone, String birthPlace, String birthDate) {
+    private void saveUserDataLocal(String name, String phone) {
         SharedPreferences sharedPref = getSharedPreferences("USER_DATA", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString("nama_user", name);
         editor.putString("phone_user", phone);
-        editor.putString("birthPlace_user", birthPlace);
-        editor.putString("birthDate_user", birthDate);
+        editor.putString("birthPlace_user", "-");
+        editor.putString("birthDate_user", "-");
         editor.putString("role_user", "user");
         editor.apply();
     }

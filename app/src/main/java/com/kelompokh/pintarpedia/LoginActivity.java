@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,13 +21,22 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.kelompokh.pintarpedia.databinding.ActivityLoginBinding;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("deprecation")
 public class LoginActivity extends AppCompatActivity {
 
     private ActivityLoginBinding binding;
     private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
     private GoogleSignInClient mGoogleSignInClient;
     private static final int RC_SIGN_IN = 9001;
 
@@ -52,6 +62,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference("Users");
 
         setupGoogleSignIn();
         setupUIListeners();
@@ -122,12 +133,12 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        handleLoginSuccess("admin");
+                        handleLoginSuccess("admin", false);
                     } else {
                         // Opsi: Jika akun admin belum ada, buat otomatis
                         mAuth.createUserWithEmailAndPassword(email, password)
                                 .addOnCompleteListener(this, createRes -> {
-                                    if (createRes.isSuccessful()) handleLoginSuccess("admin");
+                                    if (createRes.isSuccessful()) handleLoginSuccess("admin", false);
                                     else Toast.makeText(this, "Gagal Akses Admin", Toast.LENGTH_SHORT).show();
                                 });
                     }
@@ -141,7 +152,7 @@ public class LoginActivity extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         // Cek verifikasi email jika diperlukan
                         if (user != null && user.isEmailVerified()) {
-                            handleLoginSuccess("user");
+                            handleLoginSuccess("user", false);
                         } else if (user != null) {
                             Toast.makeText(this, "Silakan verifikasi email Anda.", Toast.LENGTH_LONG).show();
                             mAuth.signOut();
@@ -152,14 +163,77 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void handleLoginSuccess(String role) {
+    private void handleLoginSuccess(String role, boolean isGoogleLogin) {
         // --- 3. SIMPAN ROLE KE SHARED PREFERENCES ---
         SharedPreferences sharedPref = getSharedPreferences("USER_DATA", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString("role_user", role);
         editor.apply();
 
-        redirectByRole(role);
+        if (mAuth.getUid() != null) {
+            // Ambil data profil dari Firebase agar SharedPreferences terupdate
+            mDatabase.child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String name = snapshot.child("username").getValue(String.class);
+                        String phone = snapshot.child("phone").getValue(String.class);
+
+                        SharedPreferences.Editor edit = sharedPref.edit();
+                        edit.putString("nama_user", name);
+                        edit.putString("phone_user", phone);
+                        edit.apply();
+                        
+                        // Opsional: Pastikan role di DB sinkron jika login sebagai admin
+                        if (role.equals("admin") && !snapshot.hasChild("role")) {
+                            mDatabase.child(mAuth.getUid()).child("role").setValue("admin");
+                        }
+                        
+                        redirectByRole(role);
+                    } else if (isGoogleLogin || role.equals("admin")) {
+                        // Akun baru (Hanya untuk Google Login atau Admin baru)
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            String name = user.getDisplayName() != null ? user.getDisplayName() : (role.equals("admin") ? "Admin" : "User");
+                            String email = user.getEmail();
+
+                            Map<String, Object> newUser = new HashMap<>();
+                            newUser.put("userId", user.getUid());
+                            newUser.put("username", name);
+                            newUser.put("email", email);
+                            newUser.put("phone", "-");
+                            newUser.put("role", role);
+                            mDatabase.child(user.getUid()).setValue(newUser);
+
+                            if (role.equals("user")) {
+                                Map<String, Object> stats = new HashMap<>();
+                                stats.put("totalKuis", 0);
+                                stats.put("totalPoin", 0);
+                                stats.put("peringkat", "-");
+                                mDatabase.child(user.getUid()).child("stats").setValue(stats);
+                            }
+
+                            SharedPreferences.Editor edit = sharedPref.edit();
+                            edit.putString("nama_user", name);
+                            edit.putString("phone_user", "-");
+                            edit.apply();
+                        }
+                        redirectByRole(role);
+                    } else {
+                        // User login manual tapi data di Database "Users" tidak ada
+                        mAuth.signOut();
+                        Toast.makeText(LoginActivity.this, "Akun belum terdaftar di aplikasi. Silakan registrasi terlebih dahulu.", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    redirectByRole(role);
+                }
+            });
+        } else {
+            redirectByRole(role);
+        }
     }
 
     private void redirectByRole(String role) {
@@ -197,7 +271,7 @@ public class LoginActivity extends AppCompatActivity {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) handleLoginSuccess("user");
+                    if (task.isSuccessful()) handleLoginSuccess("user", true);
                 });
     }
 }

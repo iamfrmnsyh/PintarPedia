@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pintar Pedia</string>
     <string name="pintar">Pintar</string>
@@ -13,7 +14,6 @@
         <item>Admin</item>
     </string-array>
 
-    <!-- Register Activity -->
     <string name="buat_akun_baru">Buat Akun Baru</string>
     <string name="registrasi_subtitle">Silakan isi data di bawah untuk bergabung.</string>
     <string name="username">Username</string>
@@ -25,7 +25,6 @@
     <string name="daftar_sekarang">Daftar Sekarang</string>
     <string name="punya_akun_login">Sudah memiliki akun? Login</string>
 
-    <!-- Login Activity -->
     <string name="login_subtitle">Silakan masuk ke akun Anda</string>
     <string name="masuk_sebagai">Masuk Sebagai</string>
     <string name="role_user">User / Siswa</string>
@@ -40,4 +39,11 @@
     <string name="atau">Atau</string>
     <string name="masuk_google">Masuk dengan Google</string>
     <string name="belum_punya_akun">Belum punya akun? </string>
+
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="native_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="rewarded_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="rewarded_interstitial_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="app_open_ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
 </resources>

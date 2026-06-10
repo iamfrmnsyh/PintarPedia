@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,7 +50,7 @@ public class AdminManageUserActivity extends AppCompatActivity {
         rvUserList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
 
         userList = new ArrayList<>();
-        adapter = new UserAdapter(userList);
+        adapter = new UserAdapter(userList, this::showUserOptions);
         rvUserList.setAdapter(adapter);
 
         // Referensi Firebase ke node "Users"
@@ -65,35 +66,101 @@ public class AdminManageUserActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userList.clear();
-                for (DataSnapshot data : snapshot.getChildren()) {
-                    UserModel user = data.getValue(UserModel.class);
-                    if (user != null) {
-                        userList.add(user);
+                if (snapshot.exists()) {
+                    for (DataSnapshot data : snapshot.getChildren()) {
+                        try {
+                            UserModel user = data.getValue(UserModel.class);
+                            if (user != null) {
+                                user.setUserId(data.getKey());
+                                userList.add(user);
+                            }
+                        } catch (Exception e) {
+                            Log.e("AdminManageUser", "Error parsing user data: " + e.getMessage());
+                        }
                     }
                 }
 
-                // Update jumlah total user di layar
                 if (tvTotalUser != null) {
                     tvTotalUser.setText("Total Pengguna: " + userList.size());
                 }
-
                 adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("AdminManageUser", error.getMessage());
-                Toast.makeText(AdminManageUserActivity.this, "Koneksi Firebase Bermasalah", Toast.LENGTH_SHORT).show();
+                Log.e("AdminManageUser", "Firebase Error: " + error.getMessage() + " | Code: " + error.getCode());
+                if (error.getCode() == -1 || error.getCode() == 1) {
+                    Toast.makeText(AdminManageUserActivity.this, "Gagal: Akses Ditolak (Rules)", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(AdminManageUserActivity.this, "Masalah Koneksi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+
+    private void showUserOptions(UserModel user) {
+        String[] options = {"Jadikan Admin", "Jadikan User", "Hapus Pengguna"};
+        
+        // Sesuaikan opsi berdasarkan role saat ini
+        if ("admin".equalsIgnoreCase(user.getRole())) {
+            options[0] = "Sudah Admin";
+        } else {
+            options[1] = "Sudah User";
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Kelola: " + user.getUsername());
+        builder.setItems(options, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    updateUserRole(user, "admin");
+                    break;
+                case 1:
+                    updateUserRole(user, "user");
+                    break;
+                case 2:
+                    confirmDeleteUser(user);
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    private void updateUserRole(UserModel user, String newRole) {
+        if (newRole.equalsIgnoreCase(user.getRole())) {
+            Toast.makeText(this, "Peran sudah sesuai", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mDatabase.child(user.getUserId()).child("role").setValue(newRole)
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Berhasil merubah peran", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Gagal merubah peran", Toast.LENGTH_SHORT).show());
+    }
+
+    private void confirmDeleteUser(UserModel user) {
+        new AlertDialog.Builder(this)
+                .setTitle("Hapus Pengguna")
+                .setMessage("Apakah Anda yakin ingin menghapus " + user.getUsername() + "? Tindakan ini tidak bisa dibatalkan.")
+                .setPositiveButton("Hapus", (dialog, which) -> {
+                    mDatabase.child(user.getUserId()).removeValue()
+                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Pengguna dihapus", Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Batal", null)
+                .show();
     }
 
     // --- INNER CLASS ADAPTER ---
     private static class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
         private final List<UserModel> users;
+        private final OnUserClickListener listener;
 
-        UserAdapter(List<UserModel> users) {
+        interface OnUserClickListener {
+            void onUserClick(UserModel user);
+        }
+
+        UserAdapter(List<UserModel> users, OnUserClickListener listener) {
             this.users = users;
+            this.listener = listener;
         }
 
         @NonNull
@@ -111,6 +178,8 @@ public class AdminManageUserActivity extends AppCompatActivity {
 
             String roleStr = (user.getRole() != null) ? user.getRole().toUpperCase() : "USER";
             holder.tvDetail.setText(user.getEmail() + " • Role: " + roleStr);
+
+            holder.itemView.setOnClickListener(v -> listener.onUserClick(user));
         }
 
         @Override
@@ -126,7 +195,7 @@ public class AdminManageUserActivity extends AppCompatActivity {
                 tvName = view.findViewById(android.R.id.text1);
                 tvDetail = view.findViewById(android.R.id.text2);
 
-                tvName.setTextColor(0xFF0F172A); 
+                tvName.setTextColor(0xFF1E293B);
                 tvName.setTextSize(16);
                 tvName.setPadding(0, 10, 0, 4);
 

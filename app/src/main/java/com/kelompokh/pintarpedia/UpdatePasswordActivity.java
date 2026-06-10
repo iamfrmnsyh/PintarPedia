@@ -1,6 +1,5 @@
 package com.kelompokh.pintarpedia;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -89,16 +88,8 @@ public class UpdatePasswordActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
 
                         if (updateTask.isSuccessful()) {
-                            // Hapus sesi lama & paksa login ulang
-                            mAuth.signOut();
-                            Toast.makeText(UpdatePasswordActivity.this,
-                                    "Berhasil! Password lama sudah tidak berlaku. Silakan login ulang.",
-                                    Toast.LENGTH_LONG).show();
-
-                            Intent intent = new Intent(UpdatePasswordActivity.this, LoginActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            finish();
+                            Toast.makeText(UpdatePasswordActivity.this, "Kata sandi berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                            finish(); // Kembali ke menu profil
                         } else {
                             btnSubmit.setEnabled(true);
                             Toast.makeText(this, "Gagal update password baru.", Toast.LENGTH_SHORT).show();

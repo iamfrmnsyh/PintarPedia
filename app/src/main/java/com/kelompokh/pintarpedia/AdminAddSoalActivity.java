@@ -1,9 +1,13 @@
 package com.kelompokh.pintarpedia;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -11,14 +15,28 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Objects;
 
 public class AdminAddSoalActivity extends AppCompatActivity {
 
-    private TextInputEditText etPertanyaan, etOpsiA, etOpsiB, etOpsiC, etOpsiD, etOpsiE, etBulkSoal;
-    private android.widget.Spinner spinnerJawaban, spinnerKategori;
+    private TextInputEditText etBulkSoal;
+    private android.widget.Spinner spinnerKategori;
     private DatabaseReference mDatabase;
+
+    private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        readTextFromFile(uri);
+                    }
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,81 +47,108 @@ public class AdminAddSoalActivity extends AppCompatActivity {
         mDatabase = FirebaseDatabase.getInstance().getReference("soal_utbk");
 
         // 2. Inisialisasi Views
-        etPertanyaan = findViewById(R.id.etPertanyaan);
-        etOpsiA = findViewById(R.id.etOpsiA);
-        etOpsiB = findViewById(R.id.etOpsiB);
-        etOpsiC = findViewById(R.id.etOpsiC);
-        etOpsiD = findViewById(R.id.etOpsiD);
-        etOpsiE = findViewById(R.id.etOpsiE);
         etBulkSoal = findViewById(R.id.etBulkSoal);
-
-        spinnerJawaban = findViewById(R.id.spinnerJawaban);
         spinnerKategori = findViewById(R.id.spinnerKategori);
 
-        MaterialButton btnUpload = findViewById(R.id.btnUploadSoal);
         MaterialButton btnUploadBulk = findViewById(R.id.btnUploadBulk);
+        MaterialButton btnChooseFile = findViewById(R.id.btnChooseFile);
 
-        // 3. Setup Spinner Kategori (Sesuaikan dengan menu di Home User)
+        // 3. Setup Spinner Kategori
         String[] daftarKategori = {"UTBK 2022", "UTBK 2023", "UTBK 2024", "UTBK 2025", "Prediksi 2026", "Bank Soal"};
         ArrayAdapter<String> adapterKat = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, daftarKategori);
         spinnerKategori.setAdapter(adapterKat);
 
-        // 4. Setup Spinner Jawaban
-        String[] pilihanJawaban = {"A", "B", "C", "D", "E"};
-        ArrayAdapter<String> adapterJaw = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, pilihanJawaban);
-        spinnerJawaban.setAdapter(adapterJaw);
+        // 4. Listener Tombol Upload Bulk
+        if (btnUploadBulk != null) {
+            btnUploadBulk.setOnClickListener(v -> {
+                String bulkText = etBulkSoal.getText() != null ? etBulkSoal.getText().toString() : "";
+                prosesUploadSoalBulk(bulkText);
+            });
+        }
 
-        // 5. Listener Tombol Upload Satuan
-        btnUpload.setOnClickListener(v -> prosesUploadSoalSatuan());
-
-        // 6. Listener Tombol Upload Bulk
-        btnUploadBulk.setOnClickListener(v -> prosesUploadSoalBulk());
+        // 5. Listener Tombol Pilih File
+        if (btnChooseFile != null) {
+            btnChooseFile.setOnClickListener(v -> openFilePicker());
+        }
     }
 
-    private void prosesUploadSoalSatuan() {
-        String pertanyaan = Objects.requireNonNull(etPertanyaan.getText()).toString().trim();
-        String a = Objects.requireNonNull(etOpsiA.getText()).toString().trim();
-        String b = Objects.requireNonNull(etOpsiB.getText()).toString().trim();
-        String c = Objects.requireNonNull(etOpsiC.getText()).toString().trim();
-        String d = Objects.requireNonNull(etOpsiD.getText()).toString().trim();
-        String e = Objects.requireNonNull(etOpsiE.getText()).toString().trim();
-        String kunci = spinnerJawaban.getSelectedItem().toString();
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*"); 
+        String[] mimeTypes = {"text/plain", "application/json"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        filePickerLauncher.launch(Intent.createChooser(intent, "Pilih File Soal (.txt atau .json)"));
+    }
+
+    private void readTextFromFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    stringBuilder.append(line).append("\n");
+                }
+                reader.close();
+                inputStream.close();
+                prosesUploadSoalBulk(stringBuilder.toString());
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal membaca file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void prosesUploadSoalBulk(String dataMentah) {
         String kategori = spinnerKategori.getSelectedItem().toString();
 
-        if (pertanyaan.isEmpty() || a.isEmpty() || b.isEmpty() || c.isEmpty() || d.isEmpty() || e.isEmpty()) {
-            Toast.makeText(this, "Harap isi semua field pertanyaan dan opsi!", Toast.LENGTH_SHORT).show();
+        if (dataMentah == null || dataMentah.trim().isEmpty()) {
+            Toast.makeText(this, "Data soal kosong!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        simpanKeFirebase(pertanyaan, a, b, c, d, e, kunci, kategori, true);
-    }
-
-    private void prosesUploadSoalBulk() {
-        String dataMentah = Objects.requireNonNull(etBulkSoal.getText()).toString().trim();
-        String kategori = spinnerKategori.getSelectedItem().toString();
-
-        if (dataMentah.isEmpty()) {
-            Toast.makeText(this, "Teks bulk kosong!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String[] kumpulanSoal = dataMentah.split("#");
+        String[] kumpulanBlok = dataMentah.trim().split("\\n\\s*\\n");
         int suksesCount = 0;
 
-        for (String soalBaris : kumpulanSoal) {
-            String[] part = soalBaris.split("\\|");
-            if (part.length == 7) {
-                simpanKeFirebase(
-                        part[0].trim(),
-                        part[1].trim(),
-                        part[2].trim(),
-                        part[3].trim(),
-                        part[4].trim(),
-                        part[5].trim(),
-                        part[6].trim().toUpperCase(),
-                        kategori,
-                        false // Jangan tampilkan toast per soal agar tidak mengganggu
-                );
+        for (String blok : kumpulanBlok) {
+            String[] baris = blok.trim().split("\\n");
+            
+            String q = "", a = "", b = "", c = "", d = "", e = "", kunci = "";
+            StringBuilder sbPertanyaan = new StringBuilder();
+
+            for (String s : baris) {
+                String line = s.trim();
+                if (line.isEmpty()) continue;
+
+                if (line.toUpperCase().startsWith("A.") || line.toUpperCase().startsWith("A ")) {
+                    a = line.substring(2).trim();
+                } else if (line.toUpperCase().startsWith("B.") || line.toUpperCase().startsWith("B ")) {
+                    b = line.substring(2).trim();
+                } else if (line.toUpperCase().startsWith("C.") || line.toUpperCase().startsWith("C ")) {
+                    c = line.substring(2).trim();
+                } else if (line.toUpperCase().startsWith("D.") || line.toUpperCase().startsWith("D ")) {
+                    d = line.substring(2).trim();
+                } else if (line.toUpperCase().startsWith("E.") || line.toUpperCase().startsWith("E ")) {
+                    e = line.substring(2).trim();
+                } else if (line.toUpperCase().contains("JAWABAN:") || line.toUpperCase().contains("KUNCI:")) {
+                    String[] parts = line.split(":");
+                    if (parts.length > 1) {
+                        kunci = parts[1].trim().toUpperCase();
+                        if (kunci.length() > 1) kunci = kunci.substring(0, 1);
+                    }
+                } else if (line.length() == 1 && line.toUpperCase().matches("[ABCDE]")) {
+                    kunci = line.toUpperCase();
+                } else {
+                    if (sbPertanyaan.length() > 0) sbPertanyaan.append("\n");
+                    sbPertanyaan.append(line.replaceAll("^\\d+[\\.\\)]\\s*", ""));
+                }
+            }
+
+            q = sbPertanyaan.toString();
+
+            if (!q.isEmpty() && !a.isEmpty() && !b.isEmpty() && !c.isEmpty() && !d.isEmpty() && !e.isEmpty() && !kunci.isEmpty()) {
+                simpanKeFirebase(q, a, b, c, d, e, kunci, kategori, false);
                 suksesCount++;
             }
         }
@@ -112,15 +157,12 @@ public class AdminAddSoalActivity extends AppCompatActivity {
             Toast.makeText(this, suksesCount + " Soal berhasil diunggah ke " + kategori, Toast.LENGTH_LONG).show();
             etBulkSoal.setText("");
         } else {
-            Toast.makeText(this, "Format salah! Gunakan: Pertanyaan|A|B|C|D|E|Kunci", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Format file tidak sesuai atau soal sudah ada!", Toast.LENGTH_LONG).show();
         }
     }
 
     private void simpanKeFirebase(String q, String a, String b, String c, String d, String e, String kunci, String kat, boolean showToast) {
-        // Ambil ID Unik dari Firebase
         String idSoal = mDatabase.push().getKey();
-
-        // Menggunakan HashMap agar struktur JSON konsisten
         HashMap<String, Object> dataSoal = new HashMap<>();
         dataSoal.put("idSoal", idSoal);
         dataSoal.put("pertanyaan", q);
@@ -138,20 +180,9 @@ public class AdminAddSoalActivity extends AppCompatActivity {
                     .addOnSuccessListener(unused -> {
                         if (showToast) {
                             Toast.makeText(AdminAddSoalActivity.this, "Berhasil Simpan Soal", Toast.LENGTH_SHORT).show();
-                            resetFormSatuan();
                         }
                     })
                     .addOnFailureListener(err -> Toast.makeText(AdminAddSoalActivity.this, "Gagal: " + err.getMessage(), Toast.LENGTH_SHORT).show());
         }
-    }
-
-    private void resetFormSatuan() {
-        etPertanyaan.setText("");
-        etOpsiA.setText("");
-        etOpsiB.setText("");
-        etOpsiC.setText("");
-        etOpsiD.setText("");
-        etOpsiE.setText("");
-        etPertanyaan.requestFocus();
     }
 }

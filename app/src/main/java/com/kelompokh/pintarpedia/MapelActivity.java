@@ -24,6 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class MapelActivity extends AppCompatActivity {
     private TextView tvQuestion, tvTitle, tvProgressText;
@@ -116,7 +117,7 @@ public class MapelActivity extends AppCompatActivity {
         setButtonsEnabled(false);
 
         // --- LOGIKA RAHASIA: Hitung skor di background tanpa warna Merah/Hijau ---
-        if (selectedOption.equals(currentQuestion.getJawabanBenar())) {
+        if (currentQuestion != null && Objects.equals(selectedOption, currentQuestion.getJawabanBenar())) {
             scoreBenar++;
         } else {
             scoreSalah++;

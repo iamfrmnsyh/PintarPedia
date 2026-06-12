@@ -46,12 +46,12 @@ public class MyApplication extends Application implements Application.ActivityLi
             public void onAdLoaded(@NonNull AppOpenAd ad) {
                 appOpenAd = ad;
                 loadTime = (new Date()).getTime();
-                Log.d(TAG, "App Open Ad BERHASIL dimuat.");
+                Log.d(TAG, "App Open Ad BERHASIL dimuat di background.");
             }
 
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                Log.e(TAG, "App Open Ad GAGAL dimuat: " + loadAdError.getMessage());
+                Log.e(TAG, "App Open Ad GAGAL dimuat di background: " + loadAdError.getMessage());
             }
         };
 
@@ -114,8 +114,21 @@ public class MyApplication extends Application implements Application.ActivityLi
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
         DefaultLifecycleObserver.super.onStart(owner);
-        // Dipicu otomatis saat aplikasi dibuka kembali dari background
+
+        // Dipicu otomatis saat aplikasi dibuka kembali dari background (minimize -> resume)
         if (currentActivity != null) {
+
+            // MODIFIKASI PENTING: Jangan tampilkan iklan otomatis jika user sedang berada di gerbang autentikasi awal.
+            // Biarkan SplashActivity, LoginActivity, atau RegisterActivity mengontrol iklannya sendiri.
+            if (currentActivity instanceof SplashActivity ||
+                    currentActivity instanceof LoginActivity ||
+                    currentActivity instanceof RegisterActivity) {
+
+                Log.d(TAG, "onStart: Melompati App Open Ad karena berada di layar autentikasi/splash.");
+                return;
+            }
+
+            // Tampilkan iklan jika aplikasi di-minimize lalu dibuka kembali saat di HomeActivity, MapelActivity, dll.
             showAdIfAvailable(currentActivity);
         }
     }

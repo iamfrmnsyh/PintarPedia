@@ -71,25 +71,43 @@ public class HomeActivity extends AppCompatActivity {
         loadRewardedAd();
         loadRewardedInterstitialAd();
 
-        // 3. Konfigurasi Firebase & Validasi Autentikasi
+        // 3. Ambil Instance Firebase Auth Pertama Kali
         mAuth = FirebaseAuth.getInstance();
 
-        // PERBAIKAN SINKRONISASI: Set text default ke mode memuat demi keamanan data multi-user
+        setupClickListeners();
+    }
+
+    /**
+     * PERBAIKAN STRUKTURAL UTAMA:
+     * Memindahkan validasi akun dan referensi node data ke onResume agar token UID
+     * dibaca secara segar setiap kali siklus perpindahan screen (Login -> Home) terjadi.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // A. Reset komponen teks ke mode tunggu untuk membersihkan sisa teks sesi akun lama
         binding.tvUsernameHome.setText("Memuat...");
+
+        // B. Muat data profil dari SharedPreferences lokal terlebih dahulu jika tersedia
         loadLocalProfile();
 
-        // PERBAIKAN SINKRONISASI: Pastikan referensi database mengambil UID user yang aktif saat ini
+        // C. Ambil verifikasi akun terautentikasi terkini dari Firebase Auth
         if (mAuth.getCurrentUser() != null) {
             String uid = mAuth.getCurrentUser().getUid();
+            Log.d(TAG, "User aktif terdeteksi. UID: " + uid);
+
+            // Perbarui jalur node Database ke UID user baru
             mDatabase = FirebaseDatabase.getInstance().getReference("Users").child(uid);
+
+            // Picu pengambilan data asinkron dari server Firebase Realtime
             syncUserData();
         } else {
-            // Jika tidak ada user yang terautentikasi (keadaan tidak valid), paksa kembali ke halaman Login
+            // Jika token user kosong/invalid, amankan rute dengan mengembalikan paksa ke halaman Login
+            Log.w(TAG, "Akses ditolak: Sesi kosong.");
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
-
-        setupClickListeners();
     }
 
     // ==================== 1. STRUKTUR IKLAN BANNER ====================
@@ -345,11 +363,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * PERBAIKAN UTAMA SINKRONISASI:
-     * Listener asinkron yang menjamin data antarmuka diperbarui secara instan dari Firebase
-     * sekaligus memperbarui repositori SharedPreferences lokal agar sinkron ke halaman ProfileActivity.
-     */
     private void syncUserData() {
         if (mDatabase == null) return;
 
@@ -358,16 +371,24 @@ public class HomeActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     String nama = snapshot.child("username").getValue(String.class);
+                    Log.d(TAG, "Firebase merespons. Username didapatkan: " + nama);
+
                     if (nama != null && !nama.isEmpty()) {
-                        // 1. Tampilkan ke komponen UI teks Home secara realtime
+                        // 1. Perbarui teks antarmuka secara realtime
                         binding.tvUsernameHome.setText(nama);
 
-                        // 2. Tulis ke file SharedPreferences lokal
+                        // 2. Tulis data yang valid ke SharedPreferences lokal
                         getSharedPreferences("USER_DATA", Context.MODE_PRIVATE)
                                 .edit()
                                 .putString("nama_user", nama)
                                 .apply();
+                    } else {
+                        binding.tvUsernameHome.setText("User PintarPedia");
+                        Log.w(TAG, "Key 'username' kosong atau tidak ditemukan pada Firebase.");
                     }
+                } else {
+                    binding.tvUsernameHome.setText("Data Baru");
+                    Log.w(TAG, "Node UID ini belum terbuat atau kosong di database.");
                 }
             }
 
@@ -379,15 +400,12 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        // Menu Regular: Menggunakan Interstitial standard (Bisa langsung di-skip)
         if (binding.cardUtbk2022 != null) binding.cardUtbk2022.setOnClickListener(v -> checkAdBeforeMove("UTBK 2022"));
         if (binding.cardUtbk2023 != null) binding.cardUtbk2023.setOnClickListener(v -> checkAdBeforeMove("UTBK 2023"));
 
-        // Menu UTBK 2024 & 2025: Menggunakan Hibrida Rewarded Interstitial
         if (binding.cardUtbk2024 != null) binding.cardUtbk2024.setOnClickListener(v -> checkRewardedInterstitialBeforeMove("UTBK 2024"));
         if (binding.cardUtbk2025 != null) binding.cardUtbk2025.setOnClickListener(v -> checkRewardedInterstitialBeforeMove("UTBK 2025"));
 
-        // Menu Utama/Premium: Menggunakan Video Reward (Harus tonton sampai selesai)
         if (binding.cardPrediksi2026 != null) binding.cardPrediksi2026.setOnClickListener(v -> checkRewardBeforeMove("Prediksi 2026"));
         if (binding.cardBankSoal != null) binding.cardBankSoal.setOnClickListener(v -> checkRewardBeforeMove("Bank Soal"));
 

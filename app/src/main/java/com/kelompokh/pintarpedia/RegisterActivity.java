@@ -139,12 +139,24 @@ public class RegisterActivity extends AppCompatActivity {
         saveUserDataLocal(username, phone);
     }
 
+    /**
+     * PERBAIKAN UTAMA:
+     * Menambahkan pembersihan cache SharedPreferences (USER_DATA) saat sukses registrasi.
+     * Mencegah tumpang tindih data lama ketika user diarahkan kembali ke LoginActivity.
+     */
     private void showInAppNotification(String title, String message, boolean isSuccess) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title).setMessage(message).setCancelable(false);
         if (isSuccess) {
             builder.setPositiveButton("Ke Halaman Login", (dialog, which) -> {
+                // 1. Sign out dari session pendaftaran Firebase
                 mAuth.signOut();
+
+                // 2. Clear SharedPreferences lokal agar tidak terjadi data ghosting
+                SharedPreferences sharedPref = getSharedPreferences("USER_DATA", Context.MODE_PRIVATE);
+                sharedPref.edit().clear().apply();
+
+                // 3. Pindah ke halaman login
                 startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                 finish();
             });

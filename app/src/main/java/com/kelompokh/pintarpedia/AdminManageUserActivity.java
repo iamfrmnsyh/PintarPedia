@@ -27,11 +27,13 @@ import java.util.List;
 
 public class AdminManageUserActivity extends AppCompatActivity {
 
+    private static final String TAG = "AdminManageUser";
     private RecyclerView rvUserList;
     private UserAdapter adapter;
     private List<UserModel> userList;
     private DatabaseReference mDatabase;
     private TextView tvTotalUser;
+    private ValueEventListener usersValueListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +41,7 @@ public class AdminManageUserActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_manage_user);
 
         // Inisialisasi UI
-        tvTotalUser = findViewById(R.id.tvTotalUser); 
+        tvTotalUser = findViewById(R.id.tvTotalUser);
         rvUserList = findViewById(R.id.rvUserList);
 
         View btnBack = findViewById(R.id.btnBack);
@@ -53,7 +55,7 @@ public class AdminManageUserActivity extends AppCompatActivity {
         adapter = new UserAdapter(userList, this::showUserOptions);
         rvUserList.setAdapter(adapter);
 
-        // Referensi Firebase ke node "Users"
+        // Menggunakan nama node "Users" sesuai konfigurasi Firebase Rules Anda
         mDatabase = FirebaseDatabase.getInstance().getReference("Users");
 
         // Memulai pemantauan data secara Real-time
@@ -61,47 +63,62 @@ public class AdminManageUserActivity extends AppCompatActivity {
     }
 
     private void fetchUsersRealtime() {
-        mDatabase.addValueEventListener(new ValueEventListener() {
+        usersValueListener = new ValueEventListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userList.clear();
+
+                Log.d(TAG, "onDataChange dipicu. Apakah data ada? " + snapshot.exists());
+
                 if (snapshot.exists()) {
+                    Log.d(TAG, "Jumlah data anak ditemukan di Firebase: " + snapshot.getChildrenCount());
+
                     for (DataSnapshot data : snapshot.getChildren()) {
                         try {
                             UserModel user = data.getValue(UserModel.class);
                             if (user != null) {
-                                user.setUserId(data.getKey());
-                                userList.add(user);
+                                // ==================== LOGIKA FILTER KELOMPOK H ====================
+                                // Hanya masukkan pengguna ke daftar jika role-nya BUKAN admin.
+                                // Jika property role null, default akan tetap dianggap sebagai user biasa.
+                                if (user.getRole() == null || !"admin".equalsIgnoreCase(user.getRole())) {
+                                    user.setUserId(data.getKey());
+                                    userList.add(user);
+                                }
+                                // ==================================================================
                             }
                         } catch (Exception e) {
-                            Log.e("AdminManageUser", "Error parsing user data: " + e.getMessage());
+                            Log.e(TAG, "Gagal mengurai data user: " + e.getMessage());
                         }
                     }
                 }
 
+                // Menampilkan total data pengguna setelah disaring (Murni hanya menghitung user biasa)
                 if (tvTotalUser != null) {
                     tvTotalUser.setText("Total Pengguna: " + userList.size());
                 }
+
                 adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("AdminManageUser", "Firebase Error: " + error.getMessage() + " | Code: " + error.getCode());
+                Log.e(TAG, "Firebase Error: " + error.getMessage() + " | Code: " + error.getCode());
                 if (error.getCode() == -1 || error.getCode() == 1) {
-                    Toast.makeText(AdminManageUserActivity.this, "Gagal: Akses Ditolak (Rules)", Toast.LENGTH_LONG).show();
+                    Toast.makeText(AdminManageUserActivity.this, "Akses Ditolak! Periksa kembali Rules Firebase Anda.", Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(AdminManageUserActivity.this, "Masalah Koneksi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
-        });
+        };
+
+        // Pasang listener real-time ke referensi database
+        mDatabase.addValueEventListener(usersValueListener);
     }
 
     private void showUserOptions(UserModel user) {
         String[] options = {"Jadikan Admin", "Jadikan User", "Hapus Pengguna"};
-        
-        // Sesuaikan opsi berdasarkan role saat ini
+
         if ("admin".equalsIgnoreCase(user.getRole())) {
             options[0] = "Sudah Admin";
         } else {
@@ -133,8 +150,8 @@ public class AdminManageUserActivity extends AppCompatActivity {
         }
 
         mDatabase.child(user.getUserId()).child("role").setValue(newRole)
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Berhasil merubah peran", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Gagal merubah peran", Toast.LENGTH_SHORT).show());
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Berhasil merubah peran ke " + newRole, Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Gagal merubah peran: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private void confirmDeleteUser(UserModel user) {
@@ -143,10 +160,20 @@ public class AdminManageUserActivity extends AppCompatActivity {
                 .setMessage("Apakah Anda yakin ingin menghapus " + user.getUsername() + "? Tindakan ini tidak bisa dibatalkan.")
                 .setPositiveButton("Hapus", (dialog, which) -> {
                     mDatabase.child(user.getUserId()).removeValue()
-                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Pengguna dihapus", Toast.LENGTH_SHORT).show());
+                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Pengguna berhasil dihapus", Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener(e -> Toast.makeText(this, "Gagal menghapus: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
                 .setNegativeButton("Batal", null)
                 .show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Pembersihan listener wajib untuk menghindari kebocoran memori (memory leak)
+        if (mDatabase != null && usersValueListener != null) {
+            mDatabase.removeEventListener(usersValueListener);
+        }
     }
 
     // --- INNER CLASS ADAPTER ---

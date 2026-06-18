@@ -1,23 +1,12 @@
 <resources xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <style name="Theme.PintarPedia" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-
-        <item name="android:statusBarColor">#FFFFFF</item>
-
-        <item name="android:windowLightStatusBar">true</item>
-
-        <item name="android:navigationBarColor">#FFFFFF</item>
-        <item name="android:windowLightNavigationBar">true</item>
-    </style>
-
     <style name="CircleImage">
         <item name="cornerSize">50%</item>
     </style>
 
     <style name="Widget.PintarPedia" parent="" />
 
+    <!-- Dashboard Mapel Cards -->
     <style name="Widget.PintarPedia.CardMapel" parent="Widget.MaterialComponents.CardView">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
@@ -52,6 +41,7 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
+    <!-- Profile Styles -->
     <style name="Widget.PintarPedia.ProfileRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

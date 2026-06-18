@@ -94,14 +94,21 @@ public class RegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Panggil fungsi simpan data (termasuk stats)
+                            // Panggil fungsi simpan data (Struktur terpadu tunggal)
                             saveUserToFirebaseDatabase(user.getUid(), username, email, nomor);
 
                             user.sendEmailVerification()
                                     .addOnCompleteListener(emailTask -> {
                                         if (progressBar != null) progressBar.setVisibility(View.GONE);
-                                        showInAppNotification("Verifikasi Terkirim",
-                                                "Link verifikasi dikirim ke " + email, true);
+                                        if (emailTask.isSuccessful()) {
+                                            showInAppNotification("Verifikasi Terkirim",
+                                                    "Link verifikasi dikirim ke " + email, true);
+                                        } else {
+                                            // Failsafe jika gagal mengirim email verifikasi karena server sibuk
+                                            btnRegister.setEnabled(true);
+                                            showInAppNotification("Verifikasi Gagal",
+                                                    "Gagal mengirim email: " + emailTask.getException().getMessage(), false);
+                                        }
                                     });
                         }
                     } else {
@@ -129,21 +136,19 @@ public class RegisterActivity extends AppCompatActivity {
         statsMap.put("totalPoin", 0);
         statsMap.put("peringkat", "-");
 
-        // Simpan Data Profil Utama
-        mDatabase.child(userId).setValue(userMap);
+        // ==================== PERBAIKAN STRUKTUR PAKET DATA ====================
+        // Memasukkan statsMap langsung ke dalam struktur userMap agar dikirim bersamaan.
+        // Hal ini mencegah terjadinya tabrakan asinkron yang bisa menghapus data profil.
+        userMap.put("stats", statsMap);
 
-        // Simpan Data Statistik ke dalam folder 'stats' milik User tersebut
-        mDatabase.child(userId).child("stats").setValue(statsMap);
+        // Kirimkan data ke database murni dalam 1 kali tembak (Lebih aman & hemat kuota)
+        mDatabase.child(userId).setValue(userMap);
+        // =======================================================================
 
         // Simpan lokal juga
         saveUserDataLocal(username, phone);
     }
 
-    /**
-     * PERBAIKAN UTAMA:
-     * Menambahkan pembersihan cache SharedPreferences (USER_DATA) saat sukses registrasi.
-     * Mencegah tumpang tindih data lama ketika user diarahkan kembali ke LoginActivity.
-     */
     private void showInAppNotification(String title, String message, boolean isSuccess) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title).setMessage(message).setCancelable(false);

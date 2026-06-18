@@ -7,6 +7,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.WindowCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -135,7 +136,13 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     // ==================== ACTIVITY LIFECYCLE CALLBACKS ====================
     @Override
-    public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+    public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+        // PERBAIKAN GLOBAL:
+        // Mencegat semua activity saat dibuat agar tinggi layarnya dikunci tepat di bawah area notification bar.
+        // Ini mencegah bug visual di mana layout melesat atau terpotong ke belakang status bar hitam.
+        WindowCompat.setDecorFitsSystemWindows(activity.getWindow(), true);
+        Log.d(TAG, "onActivityCreated: Berhasil mengunci safe bounds secara global untuk " + activity.getLocalClassName());
+    }
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {

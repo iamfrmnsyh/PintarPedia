@@ -149,7 +149,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Import dari File (.TXT)"
+                    android:text="Import dari File"
                     android:fontFamily="sans-serif-black"
                     android:textColor="#10B981"
                     android:textAllCaps="true"
@@ -170,7 +170,7 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
-                    android:text="Pilih File (.txt)"
+                    android:text="Pilih File doc/pdf"
                     android:fontFamily="sans-serif-medium"
                     android:textAllCaps="false"
                     app:cornerRadius="16dp"

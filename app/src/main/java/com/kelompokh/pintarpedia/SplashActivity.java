@@ -15,6 +15,10 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.appopen.AppOpenAd;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
@@ -113,23 +117,54 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     /**
-     * LOGIKA KUNCI NAVIGASI SISI:
-     * Mengecek token sesi Firebase secara aman setelah layar iklan selesai.
+     * LOGIKA NAVIGASI TERBARU:
+     * Mengecek sesi login dan melakukan routing halaman berdasarkan ROLE di database.
      */
     private void berpindahHalaman() {
-        Intent intent;
-
         if (mAuth.getCurrentUser() != null) {
-            // Skenario A: User sudah login sebelumnya -> Langsung ke HomeActivity
-            Log.d(TAG, "Sesi aktif ditemukan. Mengarahkan langsung ke HomeActivity.");
-            intent = new Intent(SplashActivity.this, HomeActivity.class);
-        } else {
-            // Skenario B: Sesi kosong/baru install -> Masuk ke rute LoginActivity
-            Log.d(TAG, "Tidak ada sesi aktif. Mengarahkan ke LoginActivity.");
-            intent = new Intent(SplashActivity.this, LoginActivity.class);
-        }
+            String uid = mAuth.getCurrentUser().getUid();
+            Log.d(TAG, "Sesi aktif ditemukan (UID: " + uid + "). Memeriksa role pengguna...");
 
-        startActivity(intent);
-        finish(); // Menghancurkan SplashActivity agar tidak bisa di-back oleh user
+            // Mengambil data role secara realtime/sekali baca dari Realtime Database
+            // Catatan: Jika nama node Anda menggunakan huruf kapital, ganti "users" menjadi "Users"
+            FirebaseDatabase.getInstance().getReference("users").child(uid).child("role")
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Intent intent;
+                            String role = snapshot.getValue(String.class);
+
+                            Log.d(TAG, "Role ditemukan dari Firebase: " + role);
+
+                            if ("admin".equalsIgnoreCase(role)) {
+                                // Skenario A1: Pengguna terdeteksi sebagai Admin
+                                Log.d(TAG, "Merarahkan langsung ke AdminHomeActivity.");
+                                intent = new Intent(SplashActivity.this, AdminHomeActivity.class);
+                            } else {
+                                // Skenario A2: Pengguna biasa (atau properti role belum diset)
+                                Log.d(TAG, "Mengarahkan langsung ke HomeActivity.");
+                                intent = new Intent(SplashActivity.this, HomeActivity.class);
+                            }
+
+                            startActivity(intent);
+                            finish(); // Hancurkan SplashActivity
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e(TAG, "Gagal memuat data role: " + error.getMessage());
+                            // Failsafe penanganan error: Lempar ke Login jika koneksi gagal demi keamanan sesi
+                            Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    });
+        } else {
+            // Skenario B: Sesi kosong/belum login -> Masuk ke rute LoginActivity
+            Log.d(TAG, "Tidak ada sesi aktif. Mengarahkan ke LoginActivity.");
+            Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 }

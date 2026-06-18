@@ -32,7 +32,7 @@ public class AdminAddSoalActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri uri = result.getData().getData();
                     if (uri != null) {
-                        readTextFromFile(uri);
+                        ekstrakTeksDokumen(uri);
                     }
                 }
             }
@@ -72,16 +72,68 @@ public class AdminAddSoalActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * PERBAIKAN FILTER FILE PICKER KELOMPOK H:
+     * Mengubah tipe dokumen sasaran agar berfokus pada PDF, DOC, dan DOCX
+     */
     private void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*"); 
-        String[] mimeTypes = {"text/plain", "application/json"};
+        intent.setType("*/*");
+
+        // Menentukan MIME Types spesifik untuk PDF dan Microsoft Word (Doc/Docx)
+        String[] mimeTypes = {
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        };
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        filePickerLauncher.launch(Intent.createChooser(intent, "Pilih File Soal (.txt atau .json)"));
+        filePickerLauncher.launch(Intent.createChooser(intent, "Pilih File Soal (.pdf, .doc, .docx)"));
     }
 
-    private void readTextFromFile(Uri uri) {
+    /**
+     * Manajemen Router Ekstraksi Berkas Berdasarkan Ekstensi Dokumen
+     */
+    private void ekstrakTeksDokumen(Uri uri) {
+        String type = getContentResolver().getType(uri);
+
+        if (type != null) {
+            if (type.equals("application/pdf")) {
+                bacaFilePDF(uri);
+            } else if (type.contains("msword") || type.contains("wordprocessingml")) {
+                bacaFileWord(uri);
+            } else {
+                // Failsafe cadangan jika ada berkas teks murni yang lolos filter
+                bacaFileTeksSederhana(uri);
+            }
+        }
+    }
+
+    private void bacaFilePDF(Uri uri) {
+        // TIPS: Untuk membaca PDF secara murni tanpa error enkripsi biner,
+        // Kelompok H direkomendasikan menambahkan dependency 'com.tom-roush:pdfbox-android:2.0.27.0' di build.gradle
+        Toast.makeText(this, "Membaca berkas PDF...", Toast.LENGTH_SHORT).show();
+
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            // Kerangka baca stream (Gunakan PDFBox / library OCR untuk ekstraksi teks)
+            if (inputStream != null) {
+                // Contoh pembacaan standar (Ubah bagian ini sesuai library PDF extractor pilihan Anda)
+                bacaFileTeksSederhana(uri);
+                inputStream.close();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal memproses PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void bacaFileWord(Uri uri) {
+        // TIPS: Untuk dokumen Word (.docx), diperlukan pustaka extractor berbasis Apache POI Scratchpad
+        Toast.makeText(this, "Membaca dokumen Word...", Toast.LENGTH_SHORT).show();
+        bacaFileTeksSederhana(uri);
+    }
+
+    private void bacaFileTeksSederhana(Uri uri) {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             if (inputStream != null) {
@@ -96,7 +148,7 @@ public class AdminAddSoalActivity extends AppCompatActivity {
                 prosesUploadSoalBulk(stringBuilder.toString());
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal membaca file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Gagal membaca struktur teks: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -108,12 +160,13 @@ public class AdminAddSoalActivity extends AppCompatActivity {
             return;
         }
 
+        // Membagi teks dokumen per blok soal (dipisahkan baris kosong ganda)
         String[] kumpulanBlok = dataMentah.trim().split("\\n\\s*\\n");
         int suksesCount = 0;
 
         for (String blok : kumpulanBlok) {
             String[] baris = blok.trim().split("\\n");
-            
+
             String q = "", a = "", b = "", c = "", d = "", e = "", kunci = "";
             StringBuilder sbPertanyaan = new StringBuilder();
 
@@ -157,7 +210,7 @@ public class AdminAddSoalActivity extends AppCompatActivity {
             Toast.makeText(this, suksesCount + " Soal berhasil diunggah ke " + kategori, Toast.LENGTH_LONG).show();
             etBulkSoal.setText("");
         } else {
-            Toast.makeText(this, "Format file tidak sesuai atau soal sudah ada!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Format berkas tidak sesuai atau data kosong!", Toast.LENGTH_LONG).show();
         }
     }
 

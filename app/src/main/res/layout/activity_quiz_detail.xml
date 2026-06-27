@@ -80,6 +80,18 @@
                     android:orientation="vertical"
                     android:padding="24dp">
 
+                    <ImageView
+                        android:id="@+id/ivGambarSoalUser"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone"
+                        android:contentDescription="Gambar Soal"
+                        tools:visibility="visible"
+                        tools:src="@android:drawable/ic_menu_gallery" />
+
                     <TextView
                         android:id="@+id/tvQuestion"
                         android:layout_width="match_parent"

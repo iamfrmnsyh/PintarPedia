@@ -10,16 +10,17 @@ public class SoalModel {
     private String opsiD;
     private String opsiE;
     private String jawabanBenar;
-    private String kategori; // Field krusial untuk sinkronisasi menu (2022-2026)
+    private String kategori; 
+    private String urlGambar;
 
-    // 1. Constructor Kosong (Wajib ada agar Firebase bisa melakukan Deserialization)
+    // 1. Constructor Kosong
     public SoalModel() {
     }
 
-    // 2. Constructor Lengkap (Digunakan Admin saat upload soal)
+    // 2. Constructor Lengkap
     public SoalModel(String idSoal, String pertanyaan, String opsiA, String opsiB,
                      String opsiC, String opsiD, String opsiE,
-                     String jawabanBenar, String kategori) {
+                     String jawabanBenar, String kategori, String urlGambar) {
         this.idSoal = idSoal;
         this.pertanyaan = pertanyaan;
         this.opsiA = opsiA;
@@ -29,6 +30,7 @@ public class SoalModel {
         this.opsiE = opsiE;
         this.jawabanBenar = jawabanBenar;
         this.kategori = kategori;
+        this.urlGambar = urlGambar;
     }
 
     // 3. Getter dan Setter (Standar profesional Java)
@@ -58,4 +60,7 @@ public class SoalModel {
 
     public String getKategori() { return kategori; }
     public void setKategori(String kategori) { this.kategori = kategori; }
+
+    public String getUrlGambar() { return urlGambar; }
+    public void setUrlGambar(String urlGambar) { this.urlGambar = urlGambar; }
 }

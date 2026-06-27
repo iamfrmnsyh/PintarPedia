@@ -1,9 +1,17 @@
 package com.kelompokh.pintarpedia;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -16,6 +24,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -24,6 +33,12 @@ public class AdminAddSoalActivity extends AppCompatActivity {
 
     private TextInputEditText etBulkSoal;
     private android.widget.Spinner spinnerKategori;
+
+    // SINGLE QUESTION VIEWS
+    private ImageView ivPreviewSoal;
+    private TextInputEditText etSinglePertanyaan, etOpsiA, etOpsiB, etOpsiC, etOpsiD, etOpsiE, etKunciJawaban;
+    private Uri imageUri = null;
+
     private DatabaseReference mDatabase;
 
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
@@ -33,6 +48,19 @@ public class AdminAddSoalActivity extends AppCompatActivity {
                     Uri uri = result.getData().getData();
                     if (uri != null) {
                         ekstrakTeksDokumen(uri);
+                    }
+                }
+            }
+    );
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        ivPreviewSoal.setImageURI(imageUri);
+                        ivPreviewSoal.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -50,6 +78,17 @@ public class AdminAddSoalActivity extends AppCompatActivity {
         etBulkSoal = findViewById(R.id.etBulkSoal);
         spinnerKategori = findViewById(R.id.spinnerKategori);
 
+        ivPreviewSoal = findViewById(R.id.ivPreviewSoal);
+        etSinglePertanyaan = findViewById(R.id.etSinglePertanyaan);
+        etOpsiA = findViewById(R.id.etOpsiA);
+        etOpsiB = findViewById(R.id.etOpsiB);
+        etOpsiC = findViewById(R.id.etOpsiC);
+        etOpsiD = findViewById(R.id.etOpsiD);
+        etOpsiE = findViewById(R.id.etOpsiE);
+        etKunciJawaban = findViewById(R.id.etKunciJawaban);
+
+        MaterialButton btnPilihGambar = findViewById(R.id.btnPilihGambar);
+        MaterialButton btnSimpanSingleSoal = findViewById(R.id.btnSimpanSingleSoal);
         MaterialButton btnUploadBulk = findViewById(R.id.btnUploadBulk);
         MaterialButton btnChooseFile = findViewById(R.id.btnChooseFile);
 
@@ -58,7 +97,10 @@ public class AdminAddSoalActivity extends AppCompatActivity {
         ArrayAdapter<String> adapterKat = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, daftarKategori);
         spinnerKategori.setAdapter(adapterKat);
 
-        // 4. Listener Tombol Upload Bulk
+        // 4. Listeners
+        if (btnPilihGambar != null) btnPilihGambar.setOnClickListener(v -> openImagePicker());
+        if (btnSimpanSingleSoal != null) btnSimpanSingleSoal.setOnClickListener(v -> validasiDanSimpanSoalSatuan());
+
         if (btnUploadBulk != null) {
             btnUploadBulk.setOnClickListener(v -> {
                 String bulkText = etBulkSoal.getText() != null ? etBulkSoal.getText().toString() : "";
@@ -66,70 +108,115 @@ public class AdminAddSoalActivity extends AppCompatActivity {
             });
         }
 
-        // 5. Listener Tombol Pilih File
         if (btnChooseFile != null) {
             btnChooseFile.setOnClickListener(v -> openFilePicker());
         }
     }
 
-    /**
-     * PERBAIKAN FILTER FILE PICKER KELOMPOK H:
-     * Mengubah tipe dokumen sasaran agar berfokus pada PDF, DOC, dan DOCX
-     */
-    private void openFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
-
-        // Menentukan MIME Types spesifik untuk PDF dan Microsoft Word (Doc/Docx)
-        String[] mimeTypes = {
-                "application/pdf",
-                "application/msword",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        };
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        filePickerLauncher.launch(Intent.createChooser(intent, "Pilih File Soal (.pdf, .doc, .docx)"));
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        imagePickerLauncher.launch(intent);
     }
 
-    /**
-     * Manajemen Router Ekstraksi Berkas Berdasarkan Ekstensi Dokumen
-     */
-    private void ekstrakTeksDokumen(Uri uri) {
-        String type = getContentResolver().getType(uri);
+    private void validasiDanSimpanSoalSatuan() {
+        String q = etSinglePertanyaan.getText().toString().trim();
+        String a = etOpsiA.getText().toString().trim();
+        String b = etOpsiB.getText().toString().trim();
+        String c = etOpsiC.getText().toString().trim();
+        String d = etOpsiD.getText().toString().trim();
+        String e = etOpsiE.getText().toString().trim();
+        String kunci = etKunciJawaban.getText().toString().trim().toUpperCase();
+        String kategori = spinnerKategori.getSelectedItem().toString();
 
-        if (type != null) {
-            if (type.equals("application/pdf")) {
-                bacaFilePDF(uri);
-            } else if (type.contains("msword") || type.contains("wordprocessingml")) {
-                bacaFileWord(uri);
-            } else {
-                // Failsafe cadangan jika ada berkas teks murni yang lolos filter
-                bacaFileTeksSederhana(uri);
-            }
+        if (q.isEmpty() || a.isEmpty() || b.isEmpty() || kunci.isEmpty()) {
+            Toast.makeText(this, "Harap lengkapi pertanyaan, minimal 2 opsi, dan kunci!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String strGambar = "-";
+        if (imageUri != null) {
+            strGambar = konversiUriKeBase64(imageUri);
+            if (strGambar == null) return;
+        }
+
+        simpanKeFirebase(q, a, b, c, d, e, kunci, kategori, strGambar, true);
+        resetFormSatuan();
+    }
+
+    private String konversiUriKeBase64(Uri uri) {
+        try {
+            InputStream is = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            if (is != null) is.close();
+
+            if (bitmap == null) return null;
+
+            // PERBAIKAN: Tangani rotasi otomatis berdasarkan data EXIF gambar
+            bitmap = rotateBitmapIfRequired(bitmap, uri);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            byte[] bytes = baos.toByteArray();
+            return Base64.encodeToString(bytes, Base64.DEFAULT);
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal proses gambar", Toast.LENGTH_SHORT).show();
+            return null;
         }
     }
 
-    private void bacaFilePDF(Uri uri) {
-        // TIPS: Untuk membaca PDF secara murni tanpa error enkripsi biner,
-        // Kelompok H direkomendasikan menambahkan dependency 'com.tom-roush:pdfbox-android:2.0.27.0' di build.gradle
-        Toast.makeText(this, "Membaca berkas PDF...", Toast.LENGTH_SHORT).show();
-
+    private Bitmap rotateBitmapIfRequired(Bitmap img, Uri selectedImage) {
         try {
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            // Kerangka baca stream (Gunakan PDFBox / library OCR untuk ekstraksi teks)
-            if (inputStream != null) {
-                // Contoh pembacaan standar (Ubah bagian ini sesuai library PDF extractor pilihan Anda)
-                bacaFileTeksSederhana(uri);
-                inputStream.close();
+            InputStream input = getContentResolver().openInputStream(selectedImage);
+            ExifInterface ei;
+            if (android.os.Build.VERSION.SDK_INT >= 24) {
+                ei = new ExifInterface(input);
+            } else {
+                ei = new ExifInterface(selectedImage.getPath());
+            }
+
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return rotateImage(img, 90);
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return rotateImage(img, 180);
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return rotateImage(img, 270);
+                default:
+                    return img;
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal memproses PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            return img;
         }
     }
 
-    private void bacaFileWord(Uri uri) {
-        // TIPS: Untuk dokumen Word (.docx), diperlukan pustaka extractor berbasis Apache POI Scratchpad
-        Toast.makeText(this, "Membaca dokumen Word...", Toast.LENGTH_SHORT).show();
+    private static Bitmap rotateImage(Bitmap img, int degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        Bitmap rotatedImg = Bitmap.createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
+        img.recycle();
+        return rotatedImg;
+    }
+
+    private void resetFormSatuan() {
+        etSinglePertanyaan.setText("");
+        etOpsiA.setText(""); etOpsiB.setText(""); etOpsiC.setText("");
+        etOpsiD.setText(""); etOpsiE.setText("");
+        etKunciJawaban.setText("");
+        imageUri = null;
+        ivPreviewSoal.setVisibility(View.GONE);
+    }
+
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("text/plain");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        filePickerLauncher.launch(Intent.createChooser(intent, "Pilih File Soal (.txt)"));
+    }
+
+    private void ekstrakTeksDokumen(Uri uri) {
+        // Fokus murni pada berkas teks (.txt)
         bacaFileTeksSederhana(uri);
     }
 
@@ -148,7 +235,7 @@ public class AdminAddSoalActivity extends AppCompatActivity {
                 prosesUploadSoalBulk(stringBuilder.toString());
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal membaca struktur teks: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Gagal membaca berkas teks: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -160,73 +247,68 @@ public class AdminAddSoalActivity extends AppCompatActivity {
             return;
         }
 
-        // Membagi teks dokumen per blok soal (dipisahkan baris kosong ganda)
-        String[] kumpulanBlok = dataMentah.trim().split("\\n\\s*\\n");
+        String teksNormal = dataMentah.replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
+        String[] semuaBaris = teksNormal.split("\\n");
+
         int suksesCount = 0;
+        String q = "", a = "", b = "", c = "", d = "", e = "", kunci = "";
+        StringBuilder sbPertanyaan = new StringBuilder();
 
-        for (String blok : kumpulanBlok) {
-            String[] baris = blok.trim().split("\\n");
+        for (String s : semuaBaris) {
+            String line = s.trim();
+            if (line.isEmpty()) continue;
 
-            String q = "", a = "", b = "", c = "", d = "", e = "", kunci = "";
-            StringBuilder sbPertanyaan = new StringBuilder();
-
-            for (String s : baris) {
-                String line = s.trim();
-                if (line.isEmpty()) continue;
-
-                if (line.toUpperCase().startsWith("A.") || line.toUpperCase().startsWith("A ")) {
-                    a = line.substring(2).trim();
-                } else if (line.toUpperCase().startsWith("B.") || line.toUpperCase().startsWith("B ")) {
-                    b = line.substring(2).trim();
-                } else if (line.toUpperCase().startsWith("C.") || line.toUpperCase().startsWith("C ")) {
-                    c = line.substring(2).trim();
-                } else if (line.toUpperCase().startsWith("D.") || line.toUpperCase().startsWith("D ")) {
-                    d = line.substring(2).trim();
-                } else if (line.toUpperCase().startsWith("E.") || line.toUpperCase().startsWith("E ")) {
-                    e = line.substring(2).trim();
-                } else if (line.toUpperCase().contains("JAWABAN:") || line.toUpperCase().contains("KUNCI:")) {
-                    String[] parts = line.split(":");
-                    if (parts.length > 1) {
-                        kunci = parts[1].trim().toUpperCase();
-                        if (kunci.length() > 1) kunci = kunci.substring(0, 1);
-                    }
-                } else if (line.length() == 1 && line.toUpperCase().matches("[ABCDE]")) {
-                    kunci = line.toUpperCase();
-                } else {
-                    if (sbPertanyaan.length() > 0) sbPertanyaan.append("\n");
-                    sbPertanyaan.append(line.replaceAll("^\\d+[\\.\\)]\\s*", ""));
+            // Mendeteksi awal soal baru (opsional, jika format file menggunakan pemisah kata "SOAL")
+            if (line.toUpperCase().startsWith("SOAL")) {
+                if (!q.isEmpty() && !a.isEmpty() && !b.isEmpty() && !kunci.isEmpty()) {
+                    simpanKeFirebase(q, a, b, c, d, e, kunci, kategori, "-", false);
+                    suksesCount++;
                 }
+                q = ""; a = ""; b = ""; c = ""; d = ""; e = ""; kunci = "";
+                sbPertanyaan.setLength(0);
+                continue;
             }
 
-            q = sbPertanyaan.toString();
-
-            if (!q.isEmpty() && !a.isEmpty() && !b.isEmpty() && !c.isEmpty() && !d.isEmpty() && !e.isEmpty() && !kunci.isEmpty()) {
-                simpanKeFirebase(q, a, b, c, d, e, kunci, kategori, false);
-                suksesCount++;
+            if (line.toUpperCase().startsWith("A.") || line.toUpperCase().startsWith("A ")) {
+                a = line.substring(2).trim();
+            } else if (line.toUpperCase().startsWith("B.") || line.toUpperCase().startsWith("B ")) {
+                b = line.substring(2).trim();
+            } else if (line.toUpperCase().startsWith("C.") || line.toUpperCase().startsWith("C ")) {
+                c = line.substring(2).trim();
+            } else if (line.toUpperCase().startsWith("D.") || line.toUpperCase().startsWith("D ")) {
+                d = line.substring(2).trim();
+            } else if (line.toUpperCase().startsWith("E.") || line.toUpperCase().startsWith("E ")) {
+                e = line.substring(2).trim();
+            } else if (line.toUpperCase().contains("JAWABAN:") || line.toUpperCase().contains("KUNCI:")) {
+                String[] parts = line.split(":");
+                if (parts.length > 1) {
+                    kunci = parts[1].trim().toUpperCase();
+                    if (kunci.length() > 1) kunci = kunci.substring(0, 1);
+                }
+            } else {
+                if (sbPertanyaan.length() > 0) sbPertanyaan.append("\n");
+                sbPertanyaan.append(line);
+                q = sbPertanyaan.toString();
             }
+        }
+
+        // Simpan soal terakhir di dalam file
+        if (!q.isEmpty() && !a.isEmpty() && !b.isEmpty() && !kunci.isEmpty()) {
+            simpanKeFirebase(q, a, b, c, d, e, kunci, kategori, "-", false);
+            suksesCount++;
         }
 
         if (suksesCount > 0) {
-            Toast.makeText(this, suksesCount + " Soal berhasil diunggah ke " + kategori, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, suksesCount + " Soal berhasil diunggah!", Toast.LENGTH_LONG).show();
             etBulkSoal.setText("");
         } else {
-            Toast.makeText(this, "Format berkas tidak sesuai atau data kosong!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Format berkas tidak sesuai!", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void simpanKeFirebase(String q, String a, String b, String c, String d, String e, String kunci, String kat, boolean showToast) {
+    private void simpanKeFirebase(String q, String a, String b, String c, String d, String e, String kunci, String kat, String urlGambar, boolean showToast) {
         String idSoal = mDatabase.push().getKey();
-        HashMap<String, Object> dataSoal = new HashMap<>();
-        dataSoal.put("idSoal", idSoal);
-        dataSoal.put("pertanyaan", q);
-        dataSoal.put("opsiA", a);
-        dataSoal.put("opsiB", b);
-        dataSoal.put("opsiC", c);
-        dataSoal.put("opsiD", d);
-        dataSoal.put("opsiE", e);
-        dataSoal.put("jawabanBenar", kunci);
-        dataSoal.put("kategori", kat);
-        dataSoal.put("timestamp", System.currentTimeMillis());
+        SoalModel dataSoal = new SoalModel(idSoal, q, a, b, c, d, e, kunci, kat, urlGambar);
 
         if (idSoal != null) {
             mDatabase.child(idSoal).setValue(dataSoal)

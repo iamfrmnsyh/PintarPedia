@@ -3,9 +3,14 @@ package com.kelompokh.pintarpedia;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Base64;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,6 +33,7 @@ import java.util.Objects;
 
 public class MapelActivity extends AppCompatActivity {
     private TextView tvQuestion, tvTitle, tvProgressText;
+    private ImageView ivGambarSoalUser;
     private MaterialButton btn1, btn2, btn3, btn4, btn5;
     private ProgressBar progressBar;
 
@@ -47,6 +53,7 @@ public class MapelActivity extends AppCompatActivity {
 
         // 1. Inisialisasi View
         tvQuestion = findViewById(R.id.tvQuestion);
+        ivGambarSoalUser = findViewById(R.id.ivGambarSoalUser);
         tvTitle = findViewById(R.id.tvSubjectTitle);
         tvProgressText = findViewById(R.id.tvProgress);
         progressBar = findViewById(R.id.quizProgressBar);
@@ -141,6 +148,23 @@ public class MapelActivity extends AppCompatActivity {
             currentQuestion = questionList.get(questionCounter);
 
             tvQuestion.setText(currentQuestion.getPertanyaan());
+
+            // LOGIKA GAMBAR SOAL
+            String dataGambar = currentQuestion.getUrlGambar();
+            if (dataGambar == null || dataGambar.equals("-") || dataGambar.trim().isEmpty()) {
+                ivGambarSoalUser.setVisibility(View.GONE);
+            } else {
+                ivGambarSoalUser.setVisibility(View.VISIBLE);
+                try {
+                    byte[] decodedString = Base64.decode(dataGambar.trim(), Base64.DEFAULT);
+                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                    ivGambarSoalUser.setImageBitmap(decodedByte);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    ivGambarSoalUser.setVisibility(View.GONE);
+                }
+            }
+
             btn1.setText("A. " + currentQuestion.getOpsiA());
             btn2.setText("B. " + currentQuestion.getOpsiB());
             btn3.setText("C. " + currentQuestion.getOpsiC());

@@ -9,10 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.kelompokh.pintarpedia"
-        minSdk = 35
+        minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.0"
+        versionCode = 8
+        versionName = "1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
